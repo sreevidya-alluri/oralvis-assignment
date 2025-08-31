@@ -20,6 +20,7 @@ function RegisterPage() {
     try {
       await axios.post(`${API_URL}/register`, form);
       setSuccess("User registered successfully!");
+      
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed");
     }
@@ -53,7 +54,7 @@ function RegisterPage() {
         {error && <div className="error">{error}</div>}
         {success && <div className="success">{success} <a href="/login" onClick={(e) => { e.preventDefault(); navigate("/login"); }}>Login</a></div>}
         <a href="/login" onClick={(e) => { e.preventDefault(); navigate("/login"); }}>Already have an account? Login</a>
-        <a href="/register" onClick={(e) => { e.preventDefault(); navigate("/register"); }}>Register?</a>
+      
       </form>
     </div>
   );
