@@ -4,13 +4,24 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2; // Directly require cloudinary.v2
+const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+const allowedOrigins = ['https://oralvis-assignment.onrender.com'];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // Configure Cloudinary
@@ -20,11 +31,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Log Cloudinary configuration
 console.log('Cloudinary configuration:', {
   cloud_name: cloudinary.config().cloud_name,
   api_key: cloudinary.config().api_key,
-  api_secret: cloudinary.config().api_secret ? '[REDACTED]' : undefined
+  api_secret: '[REDACTED]'
 });
 
 // Ensure uploads directory exists
@@ -81,17 +91,13 @@ function authenticateRole(requiredRole) {
   };
 }
 
-// Multer setup: upload to temp with file size limit and timeout
+// Multer setup
 const upload = multer({
   dest: 'uploads/',
-  limits: { 
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    fieldSize: 10 * 1024 * 1024 // 10MB limit for fields
-  },
-  timeout: 30000 // 30 seconds timeout
+  limits: { fileSize: 10 * 1024 * 1024, fieldSize: 10 * 1024 * 1024 },
+  timeout: 30000
 });
 
-// Log Multer initialization to verify
 console.log('Multer upload object initialized:', upload);
 
 // Registration route
@@ -153,11 +159,6 @@ app.post(
   '/upload',
   authenticateRole('Technician'),
   (req, res, next) => {
-    if (!upload) {
-      console.error('Multer upload object is undefined');
-      return res.status(500).json({ error: 'Multer upload middleware is undefined' });
-    }
-    console.log('Applying Multer middleware for file upload');
     upload.single('image')(req, res, next);
   },
   async (req, res) => {
@@ -177,9 +178,6 @@ app.post(
     const imagePath = req.file.path;
 
     try {
-      if (!cloudinary.uploader) {
-        throw new Error('Cloudinary uploader is not initialized');
-      }
       const result = await cloudinary.uploader.upload(imagePath, { folder: 'oralvis_scans' });
       console.log('Cloudinary upload success:', result.secure_url);
 
@@ -192,15 +190,12 @@ app.post(
             console.error('DB insert error:', err);
             return res.status(500).json({ error: 'Database error' });
           }
-          console.log('Scan inserted with ID:', this.lastID);
-          // Clean up temp file
           fs.unlink(imagePath).catch((err) => console.error('Failed to delete temp file:', err));
           res.json({ id: this.lastID, imageUrl: result.secure_url });
         }
       );
     } catch (error) {
       console.error('Cloudinary upload failed:', error);
-      // Clean up temp file on error
       fs.unlink(imagePath).catch((err) => console.error('Failed to delete temp file:', err));
       res.status(500).json({ error: 'Cloudinary upload error', details: error.message });
     }
@@ -224,6 +219,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
-// Server listen
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`OralVis backend running on ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`OralVis backend running on port ${PORT}`);
+  console.log('Environment:', process.env.NODE_ENV || 'development');
+});
