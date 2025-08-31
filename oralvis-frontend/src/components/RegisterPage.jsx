@@ -1,6 +1,5 @@
 import { useState } from "react";
 import axios from "axios";
-import { setToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import "../styles/Auth.css";
 
@@ -19,24 +18,10 @@ function RegisterPage() {
     setError("");
     setSuccess("");
     try {
-      // Register the user
       await axios.post(`${API_URL}/register`, form);
-      setSuccess("User registered successfully! Logging in...");
-
-      // Automatically log in the user
-      const loginRes = await axios.post(`${API_URL}/login`, {
-        email: form.email,
-        password: form.password,
-      });
-
-      // Store the JWT token
-      setToken(loginRes.data.token);
-
-      // Redirect based on role
-      const redirectPath = form.role === "Technician" ? "/technician" : "/dentist";
-      setTimeout(() => navigate(redirectPath), 2000);
+      setSuccess("User registered successfully!");
     } catch (err) {
-      setError(err.response?.data?.error || "Registration or login failed");
+      setError(err.response?.data?.error || "Registration failed");
     }
   };
 
@@ -66,7 +51,9 @@ function RegisterPage() {
         </select>
         <button type="submit">Register</button>
         {error && <div className="error">{error}</div>}
-        {success && <div className="success">{success}</div>}
+        {success && <div className="success">{success} <a href="/login" onClick={(e) => { e.preventDefault(); navigate("/login"); }}>Login</a></div>}
+        <a href="/login" onClick={(e) => { e.preventDefault(); navigate("/login"); }}>Already have an account? Login</a>
+        <a href="/register" onClick={(e) => { e.preventDefault(); navigate("/register"); }}>Register?</a>
       </form>
     </div>
   );

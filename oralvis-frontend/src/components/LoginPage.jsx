@@ -20,12 +20,8 @@ function LoginPage() {
       const res = await axios.post(`${API_URL}/login`, { email, password });
       const token = res.data.token;
       setToken(token);
-
-      // Decode the JWT token to get the role
       const decoded = jwtDecode(token);
-      console.log("Decoded JWT:", decoded);
       const redirectPath = decoded.role === "Technician" ? "/technician" : "/dentist";
-      console.log("Redirecting to:", redirectPath);
       navigate(redirectPath);
     } catch (err) {
       setError(err.response?.data?.error || "Invalid credentials");
@@ -51,6 +47,7 @@ function LoginPage() {
         />
         <button type="submit">Login</button>
         {error && <div className="error">{error}</div>}
+        <a href="/register" onClick={(e) => { e.preventDefault(); navigate("/register"); }}>Dont have an account? Register</a>
       </form>
     </div>
   );
