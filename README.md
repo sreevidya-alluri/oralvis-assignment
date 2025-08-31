@@ -33,7 +33,7 @@ Git (for cloning the repository)
 Setup
 
 Clone the Repository
-git clone https://github.com/sreevidya-alluri/oralvis.git
+git clone [https://github.com/sreevidya-alluri/oralvis.git](https://github.com/sreevidya-alluri/oralvis-assignment)
 cd oralvis
 
 
